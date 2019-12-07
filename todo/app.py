@@ -6,6 +6,7 @@ from todo.extensions import (
     api,
     migrate,
     db,
+    ma,
 )
 
 
@@ -13,6 +14,7 @@ def register_extensions(app):
     api.init_app(app)
     db.init_app(app)
     migrate.init_app(app, db)
+    ma.init_app(app)
 
     return None
 
@@ -24,8 +26,8 @@ def create_app(config_object="todo.settings"):
     return app
 
 
-from todo.resources.user import User
-api.add_resource(User, '/user')
+from todo.resources.user import UserResource
+api.add_resource(UserResource, '/user')
 
 if __name__ == '__main__':
     create_app().run(debug=True)

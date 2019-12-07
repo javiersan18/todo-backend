@@ -1,15 +1,23 @@
 from flask import request
 from flask_restful import Resource, abort, reqparse
 
-from todo.extensions import db
-from todo.models.user import User
+from todo.extensions import db, ma
+from todo.models.user import UserModel
 from todo.security import pwd_context
 
 
-class User(Resource):
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('email', 'username', 'created_at')
+
+
+class UserResource(Resource):
     def get(self):
-        print(request.remote_addr)
-        return {'hello': 'world'}
+        parser = reqparse.RequestParser()
+        parser.add_argument('username', type=str, help="A user's username.")
+        args = parser.parse_args()
+        user = UserModel.query.filter_by(username=args['username']).first()
+        return UserSchema().dump(user)
 
     def post(self):
         parser = reqparse.RequestParser()
@@ -17,17 +25,13 @@ class User(Resource):
         parser.add_argument('username', type=str, help="New user's username. Username must not already exist in the database.")
         parser.add_argument('password', type=str, help="New user's password.")
         args = parser.parse_args()
-        print(
-            args['email'],
-            args['username'],
-            args['password'],
-            type(args['password'])
-        )
-        user = User(
+
+        user = UserModel(
             email=args['email'],
             username=args['username'],
             password_hash=pwd_context.hash(args['password']),
         )
+
         db.session.add(user)
         db.session.commit()
         return {'message': 'user created'}

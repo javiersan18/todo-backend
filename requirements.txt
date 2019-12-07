@@ -1,6 +1,7 @@
 flask
 flask-restful
 flask-sqlalchemy
+flask-marshmallow
 flask-migrate
 passlib
 argon2_cffi
