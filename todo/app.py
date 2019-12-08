@@ -27,7 +27,12 @@ def create_app(config_object="todo.settings"):
 
 
 from todo.resources.user import UserResource
-api.add_resource(UserResource, '/user')
+api.add_resource(
+    UserResource,
+    '/user',
+    '/user/<int:user_id>',
+    '/user/<string:username>',
+)
 
 if __name__ == '__main__':
     create_app().run(debug=True)
