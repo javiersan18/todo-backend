@@ -1,4 +1,5 @@
 flask
+flask_script
 flask-restful
 flask-cors
 flask-admin
@@ -10,3 +11,4 @@ passlib
 argon2_cffi
 pytest
 requests
+psycopg2-binary

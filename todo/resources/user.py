@@ -7,30 +7,37 @@ from todo.extensions import db
 from todo.models.user import UserModel
 from todo.security import pwd_context
 
+import datetime
+
 
 class UserModelSchema(ModelSchema):
     """Marshmallow model schema to deserialize User object to dict."""
     class Meta:
         model = UserModel
-        exclude = ('password_hash',)
+        exclude = ('password',)
 
 
 class UserCreateSchema(Schema):
     """Marshmallow schema to validate incoming request data."""
-    email = fields.Email(required=True)
     username = fields.Str(required=True)
+    email = fields.Email(required=True)
     password = fields.Str(required=True)
-    first_name = fields.Str(required=True)
-    last_name = fields.Str(required=True)
+    name = fields.Str(required=True)
+    surname1 = fields.Str(required=True)
+    surname2 = fields.Str(required=True)
+    created_at = fields.DateTime(dump_only=True)
+    modified_at = fields.DateTime(dump_only=True)
 
 
 class UserPutSchema(Schema):
     """Marshmallow schema to validate incoming request update data."""
     email = fields.Email()
-    username = fields.Str()
     password = fields.Str()
-    first_name = fields.Str()
-    last_name = fields.Str()
+    name = fields.Str()
+    surname1 = fields.Str()
+    surname2 = fields.Str()
+    created_at = fields.DateTime()
+    modified_at = fields.DateTime()
 
 
 class UserResource(Resource):
@@ -61,16 +68,9 @@ class UserResource(Resource):
         args = request.get_json()
         try:
             UserCreateSchema().load(args)
-            user = UserModel(
-                email=args.get('email'),
-                username=args.get('username'),
-                first_name=args.get('first_name'),
-                last_name=args.get('last_name'),
-                password_hash=pwd_context.hash(args.get('password')),
-            )
+            user = UserModel(args)
             try:
-                db.session.add(user)
-                db.session.commit()
+                user.save()
             except Exception as e:
                 return make_response(jsonify({'message': e.__repr__()}), 400)
             return make_response(jsonify({'message': 'user created'}), 201)
@@ -87,14 +87,10 @@ class UserResource(Resource):
                 return make_response(jsonify({'message': 'User ID or username not specified in URL path'}), 400)
             if user_id:
                 user = UserModel.query.filter_by(id=user_id).first()
-                for key in args:
-                    setattr(user, key, args[key])
-                db.session.commit()
+                user.update(args)
             elif username:
                 user = UserModel.query.filter_by(username=username).first()
-                for key in args:
-                    setattr(user, key, args[key])
-                db.session.commit()
+                user.update(args)
         except Exception as e:
             return make_response(jsonify({'message': e.__repr__()}), 400)
         return make_response(jsonify({'message': 'user updated'}), 200)
@@ -105,10 +101,8 @@ class UserResource(Resource):
 
         if user_id:
             user = UserModel.query.filter_by(id=user_id).first()
-            db.session.delete(user)
-            db.session.commit()
+            user.delete()
         elif username:
             user = UserModel.query.filter_by(username=username).first()
-            db.session.delete(user)
-            db.session.commit()
+            user.delete()
         return make_response(jsonify({'message': 'User has been deleted'}), 200)
